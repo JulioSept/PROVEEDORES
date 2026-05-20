@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1A3A2A">
+<title>Sistema de Ingreso de Proveedores — Limtek</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  button, input, select, textarea { -webkit-appearance: none; appearance: none; }
+  input[type=date] { -webkit-appearance: none; }
+
+  :root {
+    --bg: #F0EDE6;
+    --surface: #FAFAF7;
+    --surface2: #FFFFFF;
+    --border: #D8D4CC;
+    --border2: #C4BFB5;
+    --text: #1A1916;
+    --text2: #6B6760;
+    --text3: #9B9891;
+    --accent: #1A3A2A;
+    --accent2: #2D6147;
+    --accent-light: #E8F0EB;
+    --accent-pale: #C5DAC9;
+    --danger: #8B2020;
+    --danger-bg: #FAF0F0;
+    --success: #1A5C35;
+    --success-bg: #EAF3DE;
+    --warn: #7A4A10;
+    --warn-bg: #FDF0DA;
+    --radius: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+    --shadow-lg: 0 4px 24px rgba(0,0,0,0.12);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    background: var(--accent);
+    color: #fff;
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .app-header .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+  }
+  .app-header .brand-icon {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .header-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    opacity: 0.85;
+  }
+  .user-badge {
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .btn-logout {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 5px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .2s;
+  }
+  .btn-logout:hover { background: rgba(255,255,255,0.2); }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: none;
+    gap: 0;
+  }
+  .nav-tabs.visible { display: flex; }
+  .nav-tab {
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .nav-tab:hover { color: var(--accent2); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── SCREENS ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── LOGIN ── */
+  .login-wrap {
+    min-height: calc(100vh - 56px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  .login-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 3rem 2.5rem 2.5rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: var(--shadow-lg);
+  }
+  .login-logo {
+    width: 56px; height: 56px;
+    background: var(--accent);
+    border-radius: var(--radius-lg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 1.5rem;
+  }
+  .login-title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .login-sub {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 2rem;
+  }
+  .users-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .user-chip {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    background: var(--surface);
+  }
+  .user-chip:hover { border-color: var(--accent2); background: var(--accent-light); }
+  .user-chip.selected { border-color: var(--accent); background: var(--accent-light); }
+  .user-chip .uc-icon {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+  .user-chip .uc-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+    display: block;
+  }
+  .user-chip .uc-role {
+    font-size: 10px;
+    color: var(--text2);
+  }
+  .field-group { margin-bottom: 1.25rem; }
+  .field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .field-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    letter-spacing: 0.15em;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    transition: border .2s;
+    text-align: center;
+  }
+  .field-input:focus { border-color: var(--accent2); background: #fff; }
+  .btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    letter-spacing: 0.02em;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .error-msg {
+    background: var(--danger-bg);
+    border: 1px solid #F7C1C1;
+    color: var(--danger);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .error-msg.visible { display: block; }
+
+  /* ── REGISTRO ── */
+  .page-wrap {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  .page-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .page-sub {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 2rem;
+  }
+  .form-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: var(--shadow);
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+  .form-row.full { grid-template-columns: 1fr; }
+  .form-row.trio { grid-template-columns: 1fr 1fr 1fr; }
+  .form-field { display: flex; flex-direction: column; gap: 6px; }
+  .form-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text2);
+  }
+  .form-input {
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    transition: border .2s, background .2s;
+  }
+  .form-input:focus { border-color: var(--accent2); background: #fff; }
+  .form-input[readonly] { background: var(--bg); color: var(--text2); }
+  .form-select {
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    cursor: pointer;
+    transition: border .2s;
+  }
+  .form-select:focus { border-color: var(--accent2); }
+  .form-textarea {
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    resize: vertical;
+    min-height: 80px;
+    transition: border .2s;
+  }
+  .form-textarea:focus { border-color: var(--accent2); background: #fff; }
+
+  /* QR Scanner */
+  .qr-box {
+    border: 2px dashed var(--border2);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: hidden;
+    position: relative;
+  }
+  .qr-idle {
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .qr-idle-icon { font-size: 36px; margin-bottom: 8px; }
+  .qr-idle-text { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
+  .btn-scan {
+    padding: 9px 20px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-scan:hover { background: var(--accent2); }
+  .qr-video-wrap {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px;
+  }
+  .qr-video-wrap.active { display: flex; }
+  .qr-scan-line {
+    position: relative;
+  }
+  .qr-scan-line::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    height: 2px;
+    background: rgba(255, 80, 80, 0.75);
+    animation: scanline 2s linear infinite;
+  }
+  @keyframes scanline {
+    0%   { top: 10%; }
+    100% { top: 90%; }
+  }
+  .qr-stop-btn {
+    padding: 7px 18px;
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1.5px solid #F7C1C1;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .qr-result {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--success-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--accent-pale);
+    margin-top: 8px;
+  }
+  .qr-result.visible { display: flex; }
+  .qr-result-icon { font-size: 22px; }
+  .qr-result-text { font-size: 13px; font-weight: 600; color: var(--success); flex: 1; word-break: break-all; }
+  .qr-result-clear {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--danger-bg);
+    border: none;
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qr-manual-wrap {
+    padding: 0 0 10px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .qr-manual-hint { font-size: 11px; color: var(--text3); text-align: center; padding-bottom: 8px; }
+
+  /* OC toggle */
+  .oc-toggle { display: flex; gap: 8px; }
+  .oc-btn {
+    flex: 1;
+    padding: 10px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .2s;
+    background: var(--surface);
+    color: var(--text2);
+  }
+  .oc-btn.active-yes { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+  .oc-btn.active-no { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+
+  /* Action bar */
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .btn-save {
+    padding: 11px 24px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .btn-save:hover { background: var(--accent2); }
+  .btn-secondary {
+    padding: 11px 20px;
+    background: var(--surface);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .2s;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .btn-secondary:hover { border-color: var(--border2); background: var(--bg); }
+  .btn-danger {
+    padding: 11px 20px;
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1.5px solid #F7C1C1;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    display: flex; align-items: center; gap: 7px;
+    margin-left: auto;
+  }
+  .btn-danger:hover { background: #F7C1C1; border-color: var(--danger); }
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--accent);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all .3s;
+    z-index: 200;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.error { background: var(--danger); }
+
+  /* ── DASHBOARD ── */
+  .dash-wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.25rem 1rem;
+    box-shadow: var(--shadow);
+  }
+  .stat-card .sc-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text2);
+    margin-bottom: 8px;
+  }
+  .stat-card .sc-value {
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-card .sc-sub {
+    font-size: 11px;
+    color: var(--text3);
+  }
+  .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 1rem;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dash-section { margin-bottom: 2rem; }
+  .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 90px 1fr 50px;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .bar-label { color: var(--text2); font-size: 12px; text-align: right; }
+  .bar-track {
+    height: 20px;
+    background: var(--bg);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width .6s ease;
+    min-width: 4px;
+  }
+  .bar-fill.secondary { background: var(--accent2); opacity: 0.6; }
+  .bar-val { font-size: 12px; font-weight: 600; color: var(--text); }
+
+  .records-table-wrap {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .records-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .records-table th {
+    background: var(--bg);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+  }
+  .records-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  .records-table tr:last-child td { border-bottom: none; }
+  .records-table tr:hover td { background: var(--bg); }
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-yes { background: var(--success-bg); color: var(--success); }
+  .badge-no  { background: var(--danger-bg); color: var(--danger); }
+  .badge-adm { background: #E8E4FA; color: #3C3489; }
+  .badge-asi { background: var(--warn-bg); color: var(--warn); }
+  .badge-aux { background: #EAF3DE; color: #3B6D11; }
+  .badge-inv { background: #E6F1FB; color: #185FA5; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .panel {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    box-shadow: var(--shadow);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text3);
+    font-size: 14px;
+  }
+
+  /* ── RESPONSIVE ── */
+  /* Tablet */
+  @media (max-width: 860px) {
+    .dash-grid { grid-template-columns: repeat(2, 1fr); }
+    .two-col   { grid-template-columns: 1fr; }
+    .dash-wrap, .page-wrap { padding: 1.25rem; }
+  }
+
+  /* Mobile */
+  @media (max-width: 600px) {
+    /* Layout */
+    .app-header { padding: 0 1rem; height: 50px; }
+    .app-header .brand span:last-child { display: none; }
+    .header-user { gap: 6px; }
+    .header-user span:first-child { display: none; }
+    .nav-tabs { padding: 0 1rem; overflow-x: auto; white-space: nowrap; }
+    .nav-tab { padding: 12px 14px; font-size: 12px; }
+
+    /* Forms */
+    .form-row, .form-row.trio { grid-template-columns: 1fr; }
+    .two-col { grid-template-columns: 1fr; }
+    .page-wrap, .dash-wrap { padding: 0.75rem; }
+    .form-card { padding: 1rem; }
+    .panel { padding: 1rem; }
+
+    /* Login */
+    .login-wrap { padding: 1rem; align-items: flex-start; padding-top: 2rem; }
+    .login-card { padding: 1.5rem 1rem; border-radius: var(--radius-lg); }
+    .users-grid { grid-template-columns: repeat(2, 1fr); }
+    .field-input { font-size: 18px; }
+
+    /* Action bar */
+    .action-bar { flex-direction: column; gap: 8px; }
+    .action-bar button { width: 100%; justify-content: center; }
+    .btn-danger { margin-left: 0; }
+
+    /* Dashboard */
+    .dash-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-card .sc-value { font-size: 24px; }
+
+    /* Table — horizontal scroll */
+    .records-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .records-table { min-width: 560px; }
+    .records-table th, .records-table td { padding: 8px 10px; font-size: 12px; }
+
+    /* QR */
+    #qrVideo { max-width: 100%; }
+    .qr-idle { padding: 1rem; }
+    .qr-manual-wrap { flex-direction: column; }
+    .qr-manual-wrap .btn-scan { width: 100%; }
+  }
+
+  /* Extra small */
+  @media (max-width: 380px) {
+    .dash-grid { grid-template-columns: 1fr 1fr; }
+    .users-grid { grid-template-columns: repeat(2, 1fr); }
+    .login-card { padding: 1.25rem 0.75rem; }
+  }
+
+  /* Desktop — constrain login card width */
+  @media (min-width: 1024px) {
+    .login-wrap { background: radial-gradient(ellipse at 60% 40%, var(--accent-light) 0%, var(--bg) 70%); }
+    .page-wrap { max-width: 860px; }
+    .dash-wrap { max-width: 1080px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="brand">
+    <div class="brand-icon">📦</div>
+    Sistema de Proveedores
+  </div>
+  <div class="header-user" id="headerUser" style="display:none">
+    <span id="headerUserName"></span>
+    <span class="user-badge" id="headerUserRole"></span>
+    <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+  </div>
+</header>
+
+<!-- NAV TABS -->
+<nav class="nav-tabs" id="navTabs">
+  <div class="nav-tab active" onclick="showTab('registro')" id="tabRegistro">📋 Registro</div>
+  <div class="nav-tab" onclick="showTab('dashboard')" id="tabDashboard">📊 Dashboard</div>
+</nav>
+
+<!-- SCREEN 1: LOGIN -->
+<div class="screen active" id="screenLogin">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">📦</div>
+      <h1 class="login-title">Ingreso de Proveedores</h1>
+      <p class="login-sub">Seleccione su usuario e ingrese la clave de acceso</p>
+      
+      <div class="users-grid">
+        <div class="user-chip" onclick="selectUser('ADM','Administrador','2210',this)">
+          <div class="uc-icon">👤</div>
+          <span class="uc-name">ADM</span>
+          <span class="uc-role">Administrador</span>
+        </div>
+        <div class="user-chip" onclick="selectUser('ASI','Asistente','2220',this)">
+          <div class="uc-icon">👥</div>
+          <span class="uc-name">ASI</span>
+          <span class="uc-role">Asistente</span>
+        </div>
+        <div class="user-chip" onclick="selectUser('AUX','Auxiliar','2230',this)">
+          <div class="uc-icon">🧑</div>
+          <span class="uc-name">AUX</span>
+          <span class="uc-role">Auxiliar</span>
+        </div>
+        <div class="user-chip" onclick="selectUser('INV','Invitado','2026',this)" style="border-color:#C4BFB5;background:var(--bg)">
+          <div class="uc-icon">👁️</div>
+          <span class="uc-name">INV</span>
+          <span class="uc-role">Invitado</span>
+        </div>
+      </div>
+
+      <div class="error-msg" id="loginError">❌ Clave incorrecta. Intente nuevamente.</div>
+
+      <div class="field-group">
+        <label class="field-label">Clave de acceso</label>
+        <input class="field-input" type="password" id="pinInput" maxlength="4" placeholder="••••"
+          onkeyup="autoLogin(event)" autocomplete="off">
+      </div>
+
+      <button class="btn-primary" onclick="doLogin()">Ingresar al sistema →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 2: REGISTRO -->
+<div class="screen" id="screenRegistro">
+  <div class="page-wrap">
+    <h1 class="page-title">Nuevo Registro de Proveedor</h1>
+    <p class="page-sub" id="formSubtitle"></p>
+
+    <div class="form-card">
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Fecha</label>
+          <input class="form-input" type="date" id="fFecha" readonly>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Usuario</label>
+          <input class="form-input" type="text" id="fUsuario" readonly>
+        </div>
+      </div>
+
+      <div class="form-row full">
+        <div class="form-field">
+          <label class="form-label">Proveedor *</label>
+          <input class="form-input" type="text" id="fProveedor" placeholder="Nombre o razón social del proveedor">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Tipo de Mercadería *</label>
+          <select class="form-select" id="fMercaderia" onchange="updateMercTag(this.value)">
+            <option value="">— Seleccione tipo —</option>
+            <option value="UNIFORMES">👕 Uniformes</option>
+            <option value="MATERIALES DE LIMPIEZA">🧹 Materiales de limpieza</option>
+            <option value="EPPS">🦺 EPPs</option>
+            <option value="IMPLEMENTOS">🔧 Implementos</option>
+            <option value="REPUESTOS Y MAQUINAS">⚙️ Repuestos y máquinas</option>
+            <option value="EQUIPOS VALORIZADOS">💎 Equipos valorizados</option>
+            <option value="OTROS">📦 Otros</option>
+          </select>
+        </div>
+        <div class="form-field" style="justify-content:flex-end">
+          <label class="form-label" style="visibility:hidden">.</label>
+          <div id="mercaderiaTag" style="padding:10px 14px;border-radius:var(--radius);font-size:13px;font-weight:600;background:var(--accent-light);color:var(--accent2);border:1.5px solid var(--accent-pale);display:none;align-items:center;gap:6px"></div>
+        </div>
+      </div>
+
+      <div class="form-row full">
+        <div class="form-field">
+          <label class="form-label">Guía de Remisión — Lector QR *</label>
+          <div class="qr-box" id="qrBox">
+            <!-- Idle state -->
+            <div class="qr-idle" id="qrIdle">
+              <div class="qr-idle-icon">📷</div>
+              <div class="qr-idle-text">Escanea el QR de la Guía de Remisión<br><small style="color:var(--text3);font-size:11px">Se usará la cámara trasera del dispositivo</small></div>
+              <button class="btn-scan" onclick="startQR()" style="padding:12px 28px;font-size:15px;margin-top:4px">▶ Iniciar cámara QR</button>
+            </div>
+            <!-- Camera active -->
+            <div class="qr-video-wrap" id="qrVideoWrap">
+              <div class="qr-scan-line" style="width:100%;position:relative;border-radius:8px;overflow:hidden">
+                <video id="qrVideo" autoplay playsinline muted style="width:100%;display:block;background:#000;border-radius:8px;border:2px solid var(--accent2)"></video>
+                <div style="position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center">
+                  <div style="width:55%;aspect-ratio:1;border:3px solid rgba(255,255,255,0.85);border-radius:12px;box-shadow:0 0 0 2000px rgba(0,0,0,0.35)"></div>
+                </div>
+              </div>
+              <div style="font-size:12px;color:var(--text2);text-align:center">Centra el código QR dentro del recuadro blanco</div>
+              <button class="qr-stop-btn" onclick="stopQR()">✕ Detener cámara</button>
+              <canvas id="qrCanvas" style="display:none"></canvas>
+            </div>
+          </div>
+          <!-- Manual entry -->
+          <div style="margin-top:8px">
+            <div class="qr-manual-hint">¿Sin cámara? Ingresa el código manualmente:</div>
+            <div class="qr-manual-wrap">
+              <input class="form-input" type="text" id="qrManual" placeholder="Ej: GR-2024-000123" style="flex:1">
+              <button class="btn-scan" style="white-space:nowrap" onclick="setManualQR()">Confirmar</button>
+            </div>
+          </div>
+          <!-- Result -->
+          <div class="qr-result" id="qrResult">
+            <span class="qr-result-icon">✅</span>
+            <span class="qr-result-text" id="qrResultText"></span>
+            <button class="qr-result-clear" onclick="clearQR()" title="Borrar">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Orden de Compra *</label>
+          <div class="oc-toggle">
+            <button class="oc-btn" id="ocSi" onclick="setOC('Si')">✓ Sí</button>
+            <button class="oc-btn" id="ocNo" onclick="setOC('No')">✗ No</button>
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Estado OC</label>
+          <input class="form-input" type="text" id="fOCEstado" readonly placeholder="—">
+        </div>
+      </div>
+
+      <div class="form-row full">
+        <div class="form-field">
+          <label class="form-label">Observación</label>
+          <textarea class="form-textarea" id="fObservacion" placeholder="Detalles adicionales, notas o comentarios..."></textarea>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <button class="btn-save" onclick="guardarRegistro()">💾 Guardar Registro</button>
+        <button class="btn-secondary" onclick="nuevoRegistro()">➕ Nuevo Registro</button>
+        <button class="btn-secondary" onclick="exportarCSV()">📤 Exportar CSV</button>
+        <button class="btn-secondary" onclick="exportarExcel()">📊 Exportar Excel</button>
+        <button class="btn-danger" onclick="eliminarUltimo()">🗑 Eliminar último</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3: DASHBOARD -->
+<div class="screen" id="screenDashboard">
+  <div class="dash-wrap">
+    <h1 class="page-title">Dashboard de Ingresos</h1>
+    <p class="page-sub" id="dashSub"></p>
+
+    <!-- KPI Cards -->
+    <div class="dash-grid" id="kpiGrid"></div>
+
+    <!-- Two column section -->
+    <div class="two-col">
+      <div class="panel">
+        <div class="section-title">Ingresos por período</div>
+        <div class="bar-chart" id="chartPeriodo"></div>
+      </div>
+      <div class="panel">
+        <div class="section-title">Órdenes de compra</div>
+        <div class="bar-chart" id="chartOC"></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <div class="section-title">Por usuario</div>
+        <div class="bar-chart" id="chartUsuario"></div>
+      </div>
+      <div class="panel">
+        <div class="section-title">Top proveedores</div>
+        <div class="bar-chart" id="chartProveedores"></div>
+      </div>
+    </div>
+
+    <div class="dash-section">
+      <div class="panel" style="margin-bottom:1.5rem">
+        <div class="section-title">Por tipo de mercadería</div>
+        <div class="bar-chart" id="chartMercaderia"></div>
+      </div>
+    </div>
+
+    <div class="dash-section">
+      <div class="section-title">Últimos registros</div>
+      <div class="records-table-wrap">
+        <table class="records-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Usuario</th>
+              <th>Proveedor</th>
+              <th>Tipo Mercadería</th>
+              <th>OC</th>
+              <th>Observación</th>
+            </tr>
+          </thead>
+          <tbody id="dashTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top:1.5rem; display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn-save" onclick="exportarCSV()">📤 Exportar CSV</button>
+      <button class="btn-secondary" onclick="exportarExcel()">📊 Exportar Excel</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────
+const USERS = {
+  ADM: { nombre: 'Administrador', clave: '2210' },
+  ASI: { nombre: 'Asistente',     clave: '2220' },
+  AUX: { nombre: 'Auxiliar',      clave: '2230' },
+  INV: { nombre: 'Invitado',      clave: '2026' }
+};
+
+let currentUser = null;
+let selectedUserKey = null;
+let selectedClave = null;
+let ocValue = null;
+let records = [];
+
+// Load from localStorage
+function loadRecords() {
+  try {
+    const r = localStorage.getItem('prov_records');
+    if (r) records = JSON.parse(r);
+  } catch(e) { records = []; }
+}
+
+function saveRecords() {
+  localStorage.setItem('prov_records', JSON.stringify(records));
+}
+
+loadRecords();
+
+// ── LOGIN ──────────────────────────────────────────────────────────
+function selectUser(key, nombre, clave, el) {
+  selectedUserKey = key;
+  selectedClave = clave;
+  document.querySelectorAll('.user-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinInput').focus();
+  document.getElementById('loginError').classList.remove('visible');
+}
+
+function autoLogin(e) {
+  const val = e.target.value;
+  if (val.length === 4) {
+    setTimeout(doLogin, 150);
+  }
+}
+
+function doLogin() {
+  const pin = document.getElementById('pinInput').value;
+  const errEl = document.getElementById('loginError');
+
+  if (!selectedUserKey) {
+    errEl.textContent = '⚠️ Seleccione un usuario primero.';
+    errEl.classList.add('visible');
+    return;
+  }
+
+  if (pin === selectedClave) {
+    errEl.classList.remove('visible');
+    currentUser = { key: selectedUserKey, ...USERS[selectedUserKey] };
+    enterApp();
+  } else {
+    errEl.textContent = '❌ Clave incorrecta. Intente nuevamente.';
+    errEl.classList.add('visible');
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinInput').focus();
+  }
+}
+
+function enterApp() {
+  document.getElementById('headerUser').style.display = 'flex';
+  document.getElementById('headerUserName').textContent = currentUser.nombre;
+  document.getElementById('headerUserRole').textContent = currentUser.key;
+  document.getElementById('navTabs').classList.add('visible');
+
+  const tabDash = document.getElementById('tabDashboard');
+  const tabReg  = document.getElementById('tabRegistro');
+
+  if (currentUser.key === 'ADM') {
+    // Full access
+    tabDash.style.opacity = '1'; tabDash.style.cursor = 'pointer'; tabDash.title = '';
+    tabReg.style.display = 'flex';
+    showTab('registro');
+  } else if (currentUser.key === 'INV') {
+    // Dashboard only — hide registro tab
+    tabReg.style.display = 'none';
+    tabDash.style.opacity = '1'; tabDash.style.cursor = 'pointer'; tabDash.title = '';
+    showTab('dashboard');
+  } else {
+    // ASI / AUX — registro only, dashboard locked
+    tabReg.style.display = 'flex';
+    tabDash.style.opacity = '0.4'; tabDash.style.cursor = 'not-allowed';
+    tabDash.title = 'Solo el Administrador puede acceder al Dashboard';
+    showTab('registro');
+  }
+
+  // Set auto-fields for registro screen
+  const { dateStr, timeStr } = limaDate();
+  document.getElementById('fFecha').value = dateStr;
+  document.getElementById('fUsuario').value = currentUser.nombre + ' (' + currentUser.key + ')';
+  document.getElementById('formSubtitle').textContent =
+    'Fecha: ' + formatDate(dateStr) + ' · Hora: ' + timeStr.slice(0,5) + ' · Usuario: ' + currentUser.nombre;
+}
+
+function logout() {
+  currentUser = null; selectedUserKey = null; selectedClave = null;
+  document.getElementById('pinInput').value = '';
+  document.querySelectorAll('.user-chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('headerUser').style.display = 'none';
+  document.getElementById('navTabs').classList.remove('visible');
+  document.getElementById('tabRegistro').style.display = 'flex';
+  nuevoRegistro();
+  showScreen('screenLogin');
+}
+
+// ── NAVIGATION ──────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  if (tab === 'dashboard') {
+    if (!currentUser || (currentUser.key !== 'ADM' && currentUser.key !== 'INV')) {
+      showToast('🔒 Solo el Administrador puede acceder al Dashboard', true);
+      document.getElementById('tabRegistro').classList.add('active');
+      return;
+    }
+    showScreen('screenDashboard');
+    document.getElementById('tabDashboard').classList.add('active');
+    renderDashboard();
+  } else {
+    if (currentUser && currentUser.key === 'INV') {
+      showToast('🔒 El Invitado solo puede ver el Dashboard', true);
+      document.getElementById('tabDashboard').classList.add('active');
+      return;
+    }
+    showScreen('screenRegistro');
+    document.getElementById('tabRegistro').classList.add('active');
+  }
+}
+
+// ── QR SCANNER ──────────────────────────────────────────────────────
+let qrStream = null;
+let qrAnimFrame = null;
+let qrValue = null;
+
+function startQR() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast('⚠️ Tu navegador no soporta cámara. Usa Chrome o Safari.', true);
+    return;
+  }
+
+  // Try rear camera first (ideal for mobile QR scanning), fall back to any
+  const constraints = [
+    { video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+    { video: { facingMode: 'environment' } },
+    { video: true }
+  ];
+
+  function tryConstraint(idx) {
+    if (idx >= constraints.length) {
+      showToast('No se pudo acceder a ninguna cámara', true);
+      return;
+    }
+    navigator.mediaDevices.getUserMedia(constraints[idx])
+      .then(stream => {
+        qrStream = stream;
+        const video = document.getElementById('qrVideo');
+        video.srcObject = stream;
+        video.setAttribute('playsinline', '');   // iOS Safari requirement
+        video.setAttribute('autoplay', '');
+        video.muted = true;
+        video.play().catch(() => {});
+        document.getElementById('qrIdle').style.display = 'none';
+        document.getElementById('qrVideoWrap').classList.add('active');
+        video.addEventListener('loadedmetadata', () => { scanFrame(); }, { once: true });
+      })
+      .catch(() => tryConstraint(idx + 1));
+  }
+
+  tryConstraint(0);
+}
+
+function scanFrame() {
+  const video = document.getElementById('qrVideo');
+  const canvas = document.getElementById('qrCanvas');
+  if (!qrStream) return;
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    if (typeof jsQR !== 'undefined') {
+      const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+      if (code && code.data) {
+        stopQR();
+        setQRValue(code.data);
+        return;
+      }
+    }
+  }
+  qrAnimFrame = requestAnimationFrame(scanFrame);
+}
+
+function stopQR() {
+  if (qrStream) { qrStream.getTracks().forEach(t => t.stop()); qrStream = null; }
+  if (qrAnimFrame) { cancelAnimationFrame(qrAnimFrame); qrAnimFrame = null; }
+  document.getElementById('qrVideoWrap').classList.remove('active');
+  document.getElementById('qrIdle').style.display = '';
+}
+
+function setManualQR() {
+  const val = document.getElementById('qrManual').value.trim();
+  if (!val) { showToast('Ingresa un código de guía', true); return; }
+  setQRValue(val);
+  document.getElementById('qrManual').value = '';
+}
+
+function setQRValue(val) {
+  qrValue = val;
+  document.getElementById('qrResultText').textContent = val;
+  document.getElementById('qrResult').classList.add('visible');
+  showToast('✅ Guía registrada: ' + val);
+}
+
+function clearQR() {
+  qrValue = null;
+  document.getElementById('qrResult').classList.remove('visible');
+  document.getElementById('qrResultText').textContent = '';
+  stopQR();
+}
+
+
+// ── OC TOGGLE ───────────────────────────────────────────────────────
+function setOC(val) {
+  ocValue = val;
+  document.getElementById('fOCEstado').value = val;
+  const si = document.getElementById('ocSi');
+  const no = document.getElementById('ocNo');
+  si.className = 'oc-btn' + (val === 'Si' ? ' active-yes' : '');
+  no.className = 'oc-btn' + (val === 'No' ? ' active-no' : '');
+}
+
+// ── MERCADERIA TAG ───────────────────────────────────────────────────
+const MERC_ICONS = {
+  'UNIFORMES':'👕','MATERIALES DE LIMPIEZA':'🧹','EPPS':'🦺',
+  'IMPLEMENTOS':'🔧','REPUESTOS Y MAQUINAS':'⚙️','EQUIPOS VALORIZADOS':'💎','OTROS':'📦'
+};
+function updateMercTag(val) {
+  const tag = document.getElementById('mercaderiaTag');
+  if (val) {
+    tag.style.display = 'flex';
+    tag.innerHTML = (MERC_ICONS[val]||'📦') + ' ' + val;
+  } else {
+    tag.style.display = 'none';
+  }
+}
+
+// ── REGISTRO ────────────────────────────────────────────────────────
+function guardarRegistro() {
+  const proveedor = document.getElementById('fProveedor').value.trim();
+  const mercaderia = document.getElementById('fMercaderia').value;
+  if (!proveedor)   { showToast('⚠️ Ingrese el nombre del proveedor', true); return; }
+  if (!mercaderia)  { showToast('⚠️ Seleccione el tipo de mercadería', true); return; }
+  if (!qrValue)     { showToast('⚠️ Escanee o ingrese la Guía de Remisión (QR)', true); return; }
+  if (!ocValue)     { showToast('⚠️ Seleccione estado de Orden de Compra', true); return; }
+
+  const { dateStr, timeStr } = limaDate();
+  const record = {
+    id: Date.now(),
+    fecha: dateStr,
+    hora: timeStr,
+    usuario: currentUser.nombre,
+    usuarioKey: currentUser.key,
+    proveedor: proveedor,
+    tipoMercaderia: mercaderia,
+    guiaQR: qrValue,
+    ordenCompra: ocValue,
+    observacion: document.getElementById('fObservacion').value.trim()
+  };
+
+  records.push(record);
+  saveRecords();
+  showToast('✅ Registro guardado correctamente');
+  nuevoRegistro();
+}
+
+function nuevoRegistro() {
+  document.getElementById('fProveedor').value = '';
+  document.getElementById('fObservacion').value = '';
+  document.getElementById('fMercaderia').value = '';
+  const tag = document.getElementById('mercaderiaTag');
+  tag.style.display = 'none'; tag.textContent = '';
+  clearQR();
+  ocValue = null;
+  document.getElementById('fOCEstado').value = '';
+  document.getElementById('ocSi').className = 'oc-btn';
+  document.getElementById('ocNo').className = 'oc-btn';
+}
+
+// ── EXPORT ──────────────────────────────────────────────────────────
+function exportarCSV() {
+  if (!records.length) { showToast('No hay registros para exportar', true); return; }
+  const headers = ['ID','Fecha','Hora (Lima/Bogotá)','Usuario','Rol','Proveedor','Tipo Mercadería','Guía Remisión (QR)','Orden Compra','Observación'];
+  const rows = records.map(r => [
+    r.id, r.fecha, r.hora||'', r.usuario, r.usuarioKey, r.proveedor,
+    r.tipoMercaderia||'', r.guiaQR||r.guiaFileName||'', r.ordenCompra, r.observacion
+  ]);
+  const csv = [headers, ...rows].map(r =>
+    r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')
+  ).join('\r\n');
+  download('proveedores_' + today() + '.csv', 'text/csv', csv);
+  showToast('📤 CSV exportado');
+}
+
+function exportarExcel() {
+  if (!records.length) { showToast('No hay registros para exportar', true); return; }
+  const data = [
+    ['ID','Fecha','Hora (Lima/Bogotá)','Usuario','Rol','Proveedor','Tipo Mercadería','Guía Remisión','Orden Compra','Observación'],
+    ...records.map(r => [r.id, r.fecha, r.hora||'', r.usuario, r.usuarioKey, r.proveedor,
+      r.tipoMercaderia||'', r.guiaQR||r.guiaFileName||'', r.ordenCompra, r.observacion])
+  ];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [
+    {wch:14},{wch:12},{wch:10},{wch:18},{wch:8},{wch:30},{wch:22},{wch:25},{wch:14},{wch:35}
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, 'Proveedores');
+
+  // Dashboard sheet
+  const dashData = buildDashData();
+  const wsDash = XLSX.utils.aoa_to_sheet(dashData);
+  XLSX.utils.book_append_sheet(wb, wsDash, 'Resumen');
+
+  XLSX.writeFile(wb, 'proveedores_' + today() + '.xlsx');
+  showToast('📊 Excel exportado');
+}
+
+function buildDashData() {
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const weekAgo = new Date(now - 7*864e5).toISOString().split('T')[0];
+  const monthStart = todayStr.slice(0,7) + '-01';
+  const yearStart = todayStr.slice(0,4) + '-01-01';
+
+  const day   = records.filter(r => r.fecha === todayStr).length;
+  const week  = records.filter(r => r.fecha >= weekAgo).length;
+  const month = records.filter(r => r.fecha >= monthStart).length;
+  const year  = records.filter(r => r.fecha >= yearStart).length;
+  const total = records.length;
+
+  const ocSi  = records.filter(r => r.ordenCompra === 'Si').length;
+  const ocNo  = records.filter(r => r.ordenCompra === 'No').length;
+
+  const byUser = {};
+  records.forEach(r => { byUser[r.usuario] = (byUser[r.usuario]||0)+1; });
+
+  const byMerc = {};
+  records.forEach(r => { const k = r.tipoMercaderia||'Sin tipo'; byMerc[k] = (byMerc[k]||0)+1; });
+
+  const rows = [
+    ['RESUMEN DE PROVEEDORES',''],
+    ['',''],
+    ['Período','Cantidad'],
+    ['Hoy', day],
+    ['Última semana', week],
+    ['Este mes', month],
+    ['Este año', year],
+    ['Total registros', total],
+    ['',''],
+    ['Órdenes de Compra',''],
+    ['Con OC (Sí)', ocSi],
+    ['Sin OC (No)', ocNo],
+    ['',''],
+    ['Por Tipo de Mercadería',''],
+    ...Object.entries(byMerc).map(([u,c]) => [u, c]),
+    ['',''],
+    ['Por Usuario',''],
+    ...Object.entries(byUser).map(([u,c]) => [u, c])
+  ];
+  return rows;
+}
+
+function download(name, type, content) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type}));
+  a.download = name;
+  a.click();
+}
+
+function limaDate() {
+  // Lima / Bogotá = UTC-5, sin cambio de horario
+  const now = new Date();
+  const lima = new Date(now.toLocaleString('en-US', { timeZone: 'America/Lima' }));
+  const pad = n => String(n).padStart(2,'0');
+  const dateStr = lima.getFullYear() + '-' + pad(lima.getMonth()+1) + '-' + pad(lima.getDate());
+  const timeStr = pad(lima.getHours()) + ':' + pad(lima.getMinutes()) + ':' + pad(lima.getSeconds());
+  return { dateStr, timeStr, lima };
+}
+
+function limaDateFromObj(d) {
+  const lima = new Date(d.toLocaleString('en-US', { timeZone: 'America/Lima' }));
+  const pad = n => String(n).padStart(2,'0');
+  return lima.getFullYear() + '-' + pad(lima.getMonth()+1) + '-' + pad(lima.getDate());
+}
+
+function today() { return limaDate().dateStr.replace(/-/g,''); }
+
+// ── DASHBOARD ────────────────────────────────────────────────────────
+function renderDashboard() {
+  const { dateStr: todayStr, timeStr, lima } = limaDate();
+  const weekAgo = new Date(lima - 7*864e5);
+  const weekAgoStr = limaDateFromObj(weekAgo);
+  const monthStart = todayStr.slice(0,7) + '-01';
+  const yearStart  = todayStr.slice(0,4) + '-01-01';
+
+  const dayR   = records.filter(r => r.fecha === todayStr);
+  const weekR  = records.filter(r => r.fecha >= weekAgoStr);
+  const monthR = records.filter(r => r.fecha >= monthStart);
+  const yearR  = records.filter(r => r.fecha >= yearStart);
+  const total  = records.length;
+
+  document.getElementById('dashSub').textContent =
+    'Lima / Bogotá · ' + formatDate(todayStr) + ' ' + timeStr.slice(0,5) + ' · Total: ' + total + ' registros';
+
+  // KPIs
+  const kpi = document.getElementById('kpiGrid');
+  kpi.innerHTML = [
+    ['Hoy', dayR.length, 'ingresos del día'],
+    ['Esta semana', weekR.length, 'últimos 7 días'],
+    ['Este mes', monthR.length, todayStr.slice(0,7)],
+    ['Este año', yearR.length, todayStr.slice(0,4)],
+    ['Total', total, 'registros acumulados']
+  ].map(([l,v,s]) => `
+    <div class="stat-card">
+      <div class="sc-label">${l}</div>
+      <div class="sc-value">${v}</div>
+      <div class="sc-sub">${s}</div>
+    </div>
+  `).join('');
+
+  // Período chart
+  const periodos = [
+    ['Hoy', dayR.length],
+    ['Semana', weekR.length],
+    ['Mes', monthR.length],
+    ['Año', yearR.length]
+  ];
+  renderBars('chartPeriodo', periodos, false);
+
+  // OC chart
+  const ocSi = records.filter(r => r.ordenCompra === 'Si').length;
+  const ocNo = records.filter(r => r.ordenCompra === 'No').length;
+  renderBars('chartOC', [['Con OC (Sí)', ocSi],['Sin OC (No)', ocNo]], false);
+
+  // By user
+  const byUser = {};
+  records.forEach(r => { byUser[r.usuario] = (byUser[r.usuario]||0)+1; });
+  renderBars('chartUsuario', Object.entries(byUser), false);
+
+  // Top proveedores
+  const byProv = {};
+  records.forEach(r => { byProv[r.proveedor] = (byProv[r.proveedor]||0)+1; });
+  const topProv = Object.entries(byProv).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  renderBars('chartProveedores', topProv, true);
+
+  // Tipo mercadería
+  const byMerc = {};
+  const MERC_ORDER = ['UNIFORMES','MATERIALES DE LIMPIEZA','EPPS','IMPLEMENTOS','REPUESTOS Y MAQUINAS','EQUIPOS VALORIZADOS','OTROS'];
+  records.forEach(r => { const k = r.tipoMercaderia||'Sin tipo'; byMerc[k] = (byMerc[k]||0)+1; });
+  const mercData = MERC_ORDER.filter(k => byMerc[k]).map(k => [k, byMerc[k]]);
+  if (byMerc['Sin tipo']) mercData.push(['Sin tipo', byMerc['Sin tipo']]);
+  renderBars('chartMercaderia', mercData, false);
+
+  // Table
+  const tbody = document.getElementById('dashTable');
+  if (!records.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No hay registros aún</td></tr>';
+  } else {
+    const last20 = [...records].reverse().slice(0,20);
+    tbody.innerHTML = last20.map((r,i) => `
+      <tr>
+        <td style="color:var(--text3);font-family:'DM Mono',monospace;font-size:12px">${i+1}</td>
+        <td>${formatDate(r.fecha)}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text2)">${r.hora ? r.hora.slice(0,5) : '—'}</td>
+        <td><span class="badge badge-${r.usuarioKey.toLowerCase()}">${r.usuarioKey}</span></td>
+        <td style="font-weight:500">${esc(r.proveedor)}</td>
+        <td style="font-size:12px;color:var(--text2)">${esc(r.tipoMercaderia||'—')}</td>
+        <td><span class="badge badge-${r.ordenCompra === 'Si' ? 'yes' : 'no'}">${r.ordenCompra}</span></td>
+        <td style="color:var(--text2);font-size:12px">${esc(r.observacion||'—')}</td>
+      </tr>
+    `).join('');
+  }
+}
+
+function renderBars(id, data, secondary) {
+  const el = document.getElementById(id);
+  if (!data.length) { el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px 0">Sin datos</div>'; return; }
+  const max = Math.max(...data.map(d=>d[1]), 1);
+  el.innerHTML = data.map(([label, val]) => `
+    <div class="bar-row">
+      <div class="bar-label" title="${esc(label)}">${esc(label.length > 12 ? label.slice(0,12)+'…' : label)}</div>
+      <div class="bar-track">
+        <div class="bar-fill${secondary?' secondary':''}" style="width:${Math.round(val/max*100)}%"></div>
+      </div>
+      <div class="bar-val">${val}</div>
+    </div>
+  `).join('');
+}
+
+function eliminarUltimo() {
+  if (!records.length) { showToast('No hay registros para eliminar', true); return; }
+  const last = records[records.length - 1];
+  const confirm = window.confirm(
+    '¿Eliminar el último registro?\n\nProveedor: ' + last.proveedor +
+    '\nFecha: ' + formatDate(last.fecha) +
+    '\nUsuario: ' + last.usuario
+  );
+  if (!confirm) return;
+  records.pop();
+  saveRecords();
+  showToast('🗑 Último registro eliminado');
+}
+
+// ── UTILS ────────────────────────────────────────────────────────────
+function formatDate(str) {
+  if (!str) return '';
+  const [y,m,d] = str.split('-');
+  const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return d + ' ' + months[parseInt(m)-1] + ' ' + y;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '') + ' show';
+  setTimeout(() => t.className = 'toast', 2800);
+}
+</script>
+</body>
+</html>
